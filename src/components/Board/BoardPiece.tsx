@@ -11,7 +11,7 @@ export const BoardPiece: React.FC<BoardPieceProps> = ({ type, color }) => {
   };
 
   return (
-    <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 relative">
+    <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 z-10 relative">
       <img
         src={getPieceImage()}
         alt={`${color} ${type}`}

@@ -22,27 +22,24 @@ export const BoardTile: React.FC<BoardTileProps> = ({
     ? "bg-gradient-to-b from-[rgba(250,250,250,0.6)] to-[rgba(255,255,255,0.3)]"
     : "bg-gradient-to-b from-[rgba(250,250,250,0.15)] to-[rgba(255,255,255,0.05)]";
 
-  const getTileStyle = () => {
-    if (isSelected) {
-      return "bg-blue-500 bg-opacity-50";
-    }
-    if (isPossibleMove) {
-      return "bg-green-500 bg-opacity-30";
-    }
-    return bgColor;
-  };
-
   return (
     <div
       className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-22 lg:h-22
-        ${getTileStyle()}
+        ${bgColor}
         flex items-center justify-center
+        relative
         transition-all duration-200
-        hover:opacity-90
+        hover:opacity-70
         cursor-pointer`}
       onClick={onClick}
     >
       {children}
+      {isSelected && (
+        <div className="absolute inset-0 bg-[#FF9F47] opacity-10"></div>
+      )}
+      {isPossibleMove && (
+        <div className="absolute w-4 h-4 bg-[#FF9F47] rounded-full"></div>
+      )}
     </div>
   );
 };
