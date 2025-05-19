@@ -41,23 +41,56 @@ export const useGameState = (rows: number, cols: number) => {
     piece: Piece
   ): Position[] => {
     const moves: Position[] = [];
-    const { type, color } = piece;
+    const { type } = piece;
 
     switch (type) {
       case "developer":
-        for (let i = -3; i <= 3; i++) {
-          for (let j = -3; j <= 3; j++) {
-            if (i === 0 && j === 0) continue;
-            const newRow = row + i;
-            const newCol = col + j;
-            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
-              const targetPiece = boardState[`${newRow}-${newCol}`];
-              if (!targetPiece) {
-                moves.push({ row: newRow, col: newCol });
+        const directions = [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+          [1, 1],
+          [1, -1],
+          [-1, 1],
+          [-1, -1],
+        ];
+
+        directions.forEach(([dx, dy]) => {
+          for (let step = 1; step <= 3; step++) {
+            const newRow = row + dx * step;
+            const newCol = col + dy * step;
+
+            if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols)
+              break;
+
+            const currentPos = `${newRow}-${newCol}`;
+            const target = boardState[currentPos];
+
+            if (!target) {
+              moves.push({ row: newRow, col: newCol });
+              continue;
+            }
+
+            if (target.color !== piece.color) {
+              const jumpRow = newRow + dx;
+              const jumpCol = newCol + dy;
+              const jumpKey = `${jumpRow}-${jumpCol}`;
+
+              if (
+                jumpRow >= 0 &&
+                jumpRow < rows &&
+                jumpCol >= 0 &&
+                jumpCol < cols &&
+                !boardState[jumpKey]
+              ) {
+                moves.push({ row: jumpRow, col: jumpCol });
               }
             }
+
+            break;
           }
-        }
+        });
         break;
 
       case "designer":
