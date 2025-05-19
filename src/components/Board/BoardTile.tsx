@@ -38,7 +38,7 @@ export const BoardTile: React.FC<BoardTileProps> = ({
         <div className="absolute inset-0 bg-[#FF9F47] opacity-10"></div>
       )}
       {isPossibleMove && (
-        <div className="absolute w-4 h-4 bg-[#FF9F47] rounded-full"></div>
+        <div className="absolute w-4 h-4 bg-[#FF9F47] rounded-full z-10"></div>
       )}
     </div>
   );

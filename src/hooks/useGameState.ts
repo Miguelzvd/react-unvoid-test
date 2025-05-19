@@ -19,6 +19,7 @@ export const useGameState = (rows: number, cols: number) => {
   const [possibleMoves, setPossibleMoves] = useState<Position[]>([]);
   const [currentTurn, setCurrentTurn] = useState<PieceColor>("white");
   const [boardState, setBoardState] = useState<Record<string, Piece>>({});
+  const [winner, setWinner] = useState<PieceColor | null>(null);
 
   const getInitialPieceAtPosition = (
     row: number,
@@ -56,110 +57,129 @@ export const useGameState = (rows: number, cols: number) => {
     setBoardState(initialBoardState);
   }, [rows, cols]);
 
+  const checkWinCondition = (
+    currentBoardState: Record<string, Piece>,
+    lastPlayer: PieceColor
+  ) => {
+    const opponentColor = lastPlayer === "white" ? "black" : "white";
+    const opponentPieces = Object.values(currentBoardState).filter(
+      (piece) => piece.color === opponentColor
+    );
+    if (opponentPieces.length === 0) {
+      setWinner(lastPlayer);
+    }
+  };
+
   const getPossibleMoves = (
     row: number,
     col: number,
-    piece: Piece
+    piece: Piece,
+    currentBoardState: Record<string, Piece>
   ): Position[] => {
     const moves: Position[] = [];
     const { type, color } = piece;
 
-    if (type === "developer") {
-      const directions = [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-        [1, 1],
-        [1, -1],
-        [-1, 1],
-        [-1, -1],
-      ];
+    switch (type) {
+      case "developer":
+        const directions = [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+          [1, 1],
+          [1, -1],
+          [-1, 1],
+          [-1, -1],
+        ];
 
-      directions.forEach(([dx, dy]) => {
-        for (let step = 1; step <= 3; step++) {
-          const newRow = row + dx * step;
-          const newCol = col + dy * step;
+        directions.forEach(([dx, dy]) => {
+          for (let step = 1; step <= 3; step++) {
+            const newRow = row + dx * step;
+            const newCol = col + dy * step;
 
-          if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols)
-            break;
+            if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols)
+              break;
 
-          const targetKey = `${newRow}-${newCol}`;
-          const target = boardState[targetKey];
+            const targetKey = `${newRow}-${newCol}`;
+            const target = currentBoardState[targetKey];
 
-          if (!target) {
-            moves.push({ row: newRow, col: newCol });
-          } else if (target.color !== color) {
-            const jumpRow = newRow + dx;
-            const jumpCol = newCol + dy;
-            const jumpKey = `${jumpRow}-${jumpCol}`;
+            if (!target) {
+              moves.push({ row: newRow, col: newCol });
+            } else if (target.color !== color) {
+              const jumpRow = newRow + dx;
+              const jumpCol = newCol + dy;
+              const jumpKey = `${jumpRow}-${jumpCol}`;
 
-            if (
-              jumpRow >= 0 &&
-              jumpRow < rows &&
-              jumpCol >= 0 &&
-              jumpCol < cols &&
-              !boardState[jumpKey]
-            ) {
-              moves.push({
-                row: jumpRow,
-                col: jumpCol,
-                captured: { row: newRow, col: newCol },
-              });
+              if (
+                jumpRow >= 0 &&
+                jumpRow < rows &&
+                jumpCol >= 0 &&
+                jumpCol < cols &&
+                !currentBoardState[jumpKey]
+              ) {
+                moves.push({
+                  row: jumpRow,
+                  col: jumpCol,
+                  captured: { row: newRow, col: newCol },
+                });
+              }
+              break;
+            } else {
+              break;
             }
-            break;
-          } else {
-            break;
           }
-        }
-      });
-    }
+        });
+        break;
 
-    if (type === "designer") {
-      const knightMoves = [
-        [-2, -1],
-        [-2, 1],
-        [-1, -2],
-        [-1, 2],
-        [1, -2],
-        [1, 2],
-        [2, -1],
-        [2, 1],
-      ];
-      for (const [i, j] of knightMoves) {
-        const newRow = row + i;
-        const newCol = col + j;
-        if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
-          const targetPiece = boardState[`${newRow}-${newCol}`];
-          if (!targetPiece || targetPiece.color !== color) {
-            moves.push({ row: newRow, col: newCol });
-          }
-        }
-      }
-    }
-
-    if (type === "product_owner") {
-      for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-          if (i === 0 && j === 0) continue;
+      case "designer":
+        const knightMoves = [
+          [-2, -1],
+          [-2, 1],
+          [-1, -2],
+          [-1, 2],
+          [1, -2],
+          [1, 2],
+          [2, -1],
+          [2, 1],
+        ];
+        for (const [i, j] of knightMoves) {
           const newRow = row + i;
           const newCol = col + j;
           if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
-            const targetPiece = boardState[`${newRow}-${newCol}`];
+            const targetPiece = currentBoardState[`${newRow}-${newCol}`];
             if (!targetPiece || targetPiece.color !== color) {
               moves.push({ row: newRow, col: newCol });
             }
           }
         }
-      }
+        break;
+
+      case "product_owner":
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            if (i === 0 && j === 0) continue;
+            const newRow = row + i;
+            const newCol = col + j;
+            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
+              const targetPiece = currentBoardState[`${newRow}-${newCol}`];
+              if (!targetPiece || targetPiece.color !== color) {
+                moves.push({ row: newRow, col: newCol });
+              }
+            }
+          }
+        }
+        break;
     }
 
     return moves;
   };
 
   const handlePieceClick = (row: number, col: number) => {
+    if (winner) return; // Prevent moves if game is over
+
     const pieceAtClickedPosition =
-      boardState[`${row}-${col}`] || getInitialPieceAtPosition(row, col, rows, cols);
+      boardState[`${row}-${col}`] ||
+      getInitialPieceAtPosition(row, col, rows, cols);
 
     if (selectedPiece) {
       const move = possibleMoves.find((m) => m.row === row && m.col === col);
@@ -170,7 +190,12 @@ export const useGameState = (rows: number, cols: number) => {
         const toKey = `${row}-${col}`;
         const pieceToMove =
           newBoardState[fromKey] ||
-          getInitialPieceAtPosition(selectedPiece.row, selectedPiece.col, rows, cols);
+          getInitialPieceAtPosition(
+            selectedPiece.row,
+            selectedPiece.col,
+            rows,
+            cols
+          );
 
         if (pieceToMove) {
           if (move.captured) {
@@ -186,7 +211,10 @@ export const useGameState = (rows: number, cols: number) => {
           delete newBoardState[fromKey];
           newBoardState[toKey] = pieceToMove;
           setBoardState(newBoardState);
-          setCurrentTurn(currentTurn === "white" ? "black" : "white");
+
+          const nextTurn = currentTurn === "white" ? "black" : "white";
+          setCurrentTurn(nextTurn);
+          checkWinCondition(newBoardState, currentTurn); // Check win for the player who just moved
         }
       }
 
@@ -197,7 +225,12 @@ export const useGameState = (rows: number, cols: number) => {
       pieceAtClickedPosition.color === currentTurn
     ) {
       setSelectedPiece({ row, col });
-      const moves = getPossibleMoves(row, col, pieceAtClickedPosition);
+      const moves = getPossibleMoves(
+        row,
+        col,
+        pieceAtClickedPosition,
+        boardState
+      );
       setPossibleMoves(moves);
     }
   };
@@ -209,5 +242,6 @@ export const useGameState = (rows: number, cols: number) => {
     boardState,
     handlePieceClick,
     getInitialPieceAtPosition,
+    winner,
   };
 };

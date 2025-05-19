@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { BoardTile } from "./BoardTile";
-import { BoardPiece } from "./BoardPiece";
 import { BoardRow } from "./BoardRow";
-import {
-  useGameState,
-  PieceType,
-  PieceColor,
-  Position,
-} from "../../hooks/useGameState";
+import { useGameState } from "../../hooks/useGameState";
 
 interface BoardProps {
   rows: number;
@@ -23,6 +16,7 @@ export const Board: React.FC<BoardProps> = ({ rows, cols, className = "" }) => {
     currentTurn,
     boardState,
     handlePieceClick,
+    winner,
   } = useGameState(rows, cols);
 
   if (rows < 6 || rows > 12 || cols < 6 || cols > 12) {
@@ -38,7 +32,9 @@ export const Board: React.FC<BoardProps> = ({ rows, cols, className = "" }) => {
       className={`flex flex-col items-center justify-center min-h-screen ${className}`}
     >
       <div className="mb-4 text-xl font-bold text-white">
-        Current turn: {currentTurn === "white" ? "White" : "Black"}
+        {winner
+          ? `Winner: ${winner === "white" ? "White" : "Black"}`
+          : `Current turn: ${currentTurn === "white" ? "White" : "Black"}`}
       </div>
       <div className="w-full max-w-[90vmin] aspect-square p-4">
         <div
