@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BoardTile } from "./BoardTile";
 import { BoardPiece } from "./BoardPiece";
 import { BoardRow } from "./BoardRow";
-import { useGameState } from "../../hooks/useGameState";
+import {
+  useGameState,
+  PieceType,
+  PieceColor,
+  Position,
+} from "../../hooks/useGameState";
 
 interface BoardProps {
   rows: number;
@@ -11,19 +16,13 @@ interface BoardProps {
   className?: string;
 }
 
-export const Board: React.FC<BoardProps> = ({
-  rows,
-  cols,
-  onSquareClick,
-  className = "",
-}) => {
+export const Board: React.FC<BoardProps> = ({ rows, cols, className = "" }) => {
   const {
     selectedPiece,
     possibleMoves,
     currentTurn,
     boardState,
     handlePieceClick,
-    getInitialPosition,
   } = useGameState(rows, cols);
 
   if (rows < 6 || rows > 12 || cols < 6 || cols > 12) {
@@ -54,7 +53,6 @@ export const Board: React.FC<BoardProps> = ({
                 boardState={boardState}
                 selectedPiece={selectedPiece}
                 possibleMoves={possibleMoves}
-                getInitialPosition={getInitialPosition}
                 handlePieceClick={handlePieceClick}
               />
             </div>
