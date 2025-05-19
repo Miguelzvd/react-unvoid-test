@@ -11,6 +11,7 @@ interface Piece {
 interface Position {
   row: number;
   col: number;
+  captured?: Position;
 }
 
 export const useGameState = (rows: number, cols: number) => {
@@ -41,7 +42,7 @@ export const useGameState = (rows: number, cols: number) => {
     piece: Piece
   ): Position[] => {
     const moves: Position[] = [];
-    const { type } = piece;
+    const { type, color } = piece;
 
     switch (type) {
       case "developer":
@@ -64,15 +65,12 @@ export const useGameState = (rows: number, cols: number) => {
             if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols)
               break;
 
-            const currentPos = `${newRow}-${newCol}`;
-            const target = boardState[currentPos];
+            const targetKey = `${newRow}-${newCol}`;
+            const target = boardState[targetKey];
 
             if (!target) {
               moves.push({ row: newRow, col: newCol });
-              continue;
-            }
-
-            if (target.color !== piece.color) {
+            } else if (target.color !== color) {
               const jumpRow = newRow + dx;
               const jumpCol = newCol + dy;
               const jumpKey = `${jumpRow}-${jumpCol}`;
@@ -84,11 +82,16 @@ export const useGameState = (rows: number, cols: number) => {
                 jumpCol < cols &&
                 !boardState[jumpKey]
               ) {
-                moves.push({ row: jumpRow, col: jumpCol });
+                moves.push({
+                  row: jumpRow,
+                  col: jumpCol,
+                  captured: { row: newRow, col: newCol },
+                });
               }
+              break;
+            } else {
+              break;
             }
-
-            break;
           }
         });
         break;
@@ -109,7 +112,7 @@ export const useGameState = (rows: number, cols: number) => {
           const newCol = col + j;
           if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
             const targetPiece = boardState[`${newRow}-${newCol}`];
-            if (!targetPiece) {
+            if (!targetPiece || targetPiece.color !== color) {
               moves.push({ row: newRow, col: newCol });
             }
           }
@@ -124,7 +127,7 @@ export const useGameState = (rows: number, cols: number) => {
             const newCol = col + j;
             if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
               const targetPiece = boardState[`${newRow}-${newCol}`];
-              if (!targetPiece) {
+              if (!targetPiece || targetPiece.color !== color) {
                 moves.push({ row: newRow, col: newCol });
               }
             }
@@ -137,27 +140,33 @@ export const useGameState = (rows: number, cols: number) => {
   };
 
   const handlePieceClick = (row: number, col: number) => {
-    const piece = boardState[`${row}-${col}`] || getInitialPosition(row, col);
+    const pieceAtClickedPosition =
+      boardState[`${row}-${col}`] || getInitialPosition(row, col);
 
-    if (piece && piece.color === currentTurn) {
-      setSelectedPiece({ row, col });
-      const moves = getPossibleMoves(row, col, piece);
-      setPossibleMoves(moves);
-    } else if (selectedPiece) {
-      const isValidMove = possibleMoves.some(
-        (move) => move.row === row && move.col === col
-      );
+    if (selectedPiece) {
+      const move = possibleMoves.find((m) => m.row === row && m.col === col);
 
-      if (isValidMove) {
+      if (move) {
         const newBoardState = { ...boardState };
-        const pieceKey = `${selectedPiece.row}-${selectedPiece.col}`;
-        const piece =
-          boardState[pieceKey] ||
+        const fromKey = `${selectedPiece.row}-${selectedPiece.col}`;
+        const toKey = `${row}-${col}`;
+        const pieceToMove =
+          newBoardState[fromKey] ||
           getInitialPosition(selectedPiece.row, selectedPiece.col);
 
-        if (piece) {
-          delete newBoardState[pieceKey];
-          newBoardState[`${row}-${col}`] = piece;
+        if (pieceToMove) {
+          if (move.captured) {
+            const capturedKey = `${move.captured.row}-${move.captured.col}`;
+            delete newBoardState[capturedKey];
+          } else if (
+            newBoardState[toKey] &&
+            newBoardState[toKey].color !== pieceToMove.color
+          ) {
+            delete newBoardState[toKey];
+          }
+
+          delete newBoardState[fromKey];
+          newBoardState[toKey] = pieceToMove;
           setBoardState(newBoardState);
           setCurrentTurn(currentTurn === "white" ? "black" : "white");
         }
@@ -165,6 +174,13 @@ export const useGameState = (rows: number, cols: number) => {
 
       setSelectedPiece(null);
       setPossibleMoves([]);
+    } else if (
+      pieceAtClickedPosition &&
+      pieceAtClickedPosition.color === currentTurn
+    ) {
+      setSelectedPiece({ row, col });
+      const moves = getPossibleMoves(row, col, pieceAtClickedPosition);
+      setPossibleMoves(moves);
     }
   };
 
