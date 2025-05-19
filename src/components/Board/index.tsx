@@ -36,7 +36,7 @@ export const Board: React.FC<BoardProps> = ({ rows, cols, className = "" }) => {
           ? `Winner: ${winner === "white" ? "White" : "Black"}`
           : `Current turn: ${currentTurn === "white" ? "White" : "Black"}`}
       </div>
-      <div className="w-full max-w-[90vmin] aspect-square p-4">
+      <div className="w-full max-w-[90vmin] aspect-square p-4 rounded-lg overflow-hidden">
         <div
           className="w-full h-full grid"
           style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}
